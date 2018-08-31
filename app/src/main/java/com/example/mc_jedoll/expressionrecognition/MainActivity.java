@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
+// rian ganteng 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
     private String TAG = "MAIN_TAG";
     private CameraBridgeViewBase mCamera;
