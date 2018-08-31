@@ -118,14 +118,14 @@ public class CameraHandler implements CameraBridgeViewBase.CvCameraViewListener2
         mGray = inputFrame.gray();
 
         // math to bitmap
-        try {
-            mBitmap = Bitmap.createBitmap(grayscaleImage.cols(), grayscaleImage.rows(), Bitmap.Config.ARGB_8888);
-            Utils.matToBitmap(grayscaleImage, mBitmap);
-            mImageView.setImageBitmap(mBitmap);
-            mImageView.invalidate();
-        } catch (Exception ex) {
-            Log.e(TAG, ex.toString());
-        }
+//        try {
+//            mBitmap = Bitmap.createBitmap(grayscaleImage.cols(), grayscaleImage.rows(), Bitmap.Config.ARGB_8888);
+//            Utils.matToBitmap(grayscaleImage, mBitmap);
+//            mImageView.setImageBitmap(mBitmap);
+//            mImageView.invalidate();
+//        } catch (Exception ex) {
+//            Log.e(TAG, ex.toString());
+//        }
 
         Imgproc.cvtColor(inputFrame.rgba(), grayscaleImage, Imgproc.COLOR_RGBA2RGB);
 
