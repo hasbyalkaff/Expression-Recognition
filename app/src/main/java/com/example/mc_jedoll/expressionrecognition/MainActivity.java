@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.WindowManager;
+import android.widget.ImageView;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -24,111 +25,51 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
-public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
+public class MainActivity extends AppCompatActivity {
     private String TAG = "MAIN_TAG";
-    private CameraBridgeViewBase mCamera;
-    private CascadeClassifier mDetection;
-    private int absoluteFaceSize;
-    private Mat grayscaleImage;
+    private CameraHandler cameraHandler;
+    private VolleyRequest volleyRequest;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i(TAG, "onCreate called");
         setContentView(R.layout.activity_main);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        // inisialisasi kamera
-        mCamera = findViewById(R.id.cameraView);
-        mCamera.setVisibility(SurfaceView.VISIBLE);
-        mCamera.setCvCameraViewListener(this);
-    }
+        ImageView mImage = findViewById(R.id.imageView);
+        CameraBridgeViewBase mCamera = findViewById(R.id.cameraView);
 
-    // Connect to OpenCV
-    private BaseLoaderCallback mLoaderCallback =new BaseLoaderCallback(this) {
-        @Override
-        public void onManagerConnected(int status) {
-            switch(status){
-                case LoaderCallbackInterface.SUCCESS:{
-                    Log.i(TAG, "OpenCV loaded successfully");
-                    intializeOpenCVDependencies();
-                } break;
-                default: {
-                    super.onManagerConnected(status);
-                } break;
-            }
-            super.onManagerConnected(status);
-        }
-    };
+        // create cameraHandler
+        cameraHandler = new CameraHandler(this);
+        volleyRequest = new VolleyRequest(this);
 
-    private void intializeOpenCVDependencies(){
-        try {
-            InputStream is = getResources().openRawResource(R.raw.haarcascade_frontalface_alt);
-            File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
-            File mCascadeFile = new File(cascadeDir, "haarcascade_frontalface_alt.xml");
-            FileOutputStream os = new FileOutputStream(mCascadeFile);
+        // open camera
+        cameraHandler.startCamera(mCamera, mImage);
 
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-            while ((bytesRead = is.read(buffer)) != -1){
-                os.write(buffer, 0, bytesRead);
-            }
-            is.close();
-            os.close();
-
-            mDetection = new CascadeClassifier(mCascadeFile.getAbsolutePath());
-            mDetection.load(mCascadeFile.getAbsolutePath());
-            cascadeDir.delete();
-        } catch (Exception e){
-            Log.e(TAG, "Error loading cascade", e);
-        }
-        mCamera.enableView();
+        volleyRequest.methodGET();
+        volleyRequest.jsonPOST();
     }
 
     @Override
     public void onResume()
     {
         super.onResume();
-        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0, this, mLoaderCallback);
+        Log.i(TAG, "onResume called");
+        cameraHandler.startAsync();
     }
 
     @Override
     public void onPause()
     {
         super.onPause();
-        if (mCamera != null)
-            mCamera.disableView();
+        Log.i(TAG, "onPause called");
+        cameraHandler.disableCamera();
     }
 
     public void onDestroy() {
         super.onDestroy();
-        if (mCamera != null)
-            mCamera.disableView();
-    }
-
-    @Override
-    public void onCameraViewStarted(int width, int height) {
-        grayscaleImage = new Mat(height, width, CvType.CV_8UC4);
-        absoluteFaceSize = (int)(height*0.2);
-    }
-
-    @Override
-    public void onCameraViewStopped() {
-
-    }
-
-    @Override
-    public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        Imgproc.cvtColor(inputFrame.rgba(), grayscaleImage, Imgproc.COLOR_RGBA2RGB);
-
-        MatOfRect faces = new MatOfRect();
-        if(mDetection != null){
-            mDetection.detectMultiScale(grayscaleImage, faces, 1.1, 2, 2, new Size(absoluteFaceSize, absoluteFaceSize), new Size());
-        }
-
-        Rect[] facesArray = faces.toArray();
-        for (int i=0; i<facesArray.length; i++){
-            Imgproc.rectangle(inputFrame.gray(),facesArray[i].tl(), facesArray[i].br(), new Scalar(0, 255, 255), 3);
-        }
-        return inputFrame.gray();
+        Log.i(TAG, "onDestroy called");
+        cameraHandler.disableCamera();
     }
 }
